@@ -111,6 +111,7 @@ export const analyticsEvents = pgTable("analytics_events", {
 export const fanPhotos = pgTable("fan_photos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
+  name: varchar("name").notNull(),
   imageUrl: text("image_url").notNull(),
   caption: text("caption"),
   status: varchar("status").notNull().default("pending"),
@@ -217,6 +218,7 @@ export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).pi
 
 export const insertFanPhotoSchema = createInsertSchema(fanPhotos).pick({
   userId: true,
+  name: true,
   imageUrl: true,
   caption: true,
 });

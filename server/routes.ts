@@ -262,6 +262,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Fan Gallery routes
   app.post("/api/fan-gallery", authMiddleware, async (req, res) => {
     try {
+      // Check if session is properly initialized
+      if (!req.session) {
+        return res.status(500).json({ message: "Erro de configuração da sessão" });
+      }
+
       const result = insertFanPhotoSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({

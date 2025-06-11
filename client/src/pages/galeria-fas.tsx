@@ -17,7 +17,7 @@ export default function GaleriaFas() {
   const [formData, setFormData] = useState({
     name: "",
     caption: "",
-    imageData: ""
+    imageUrl: ""
   });
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
@@ -61,7 +61,7 @@ export default function GaleriaFas() {
         title: "Foto enviada com sucesso!",
         description: "Sua foto está aguardando aprovação. Em breve aparecerá na galeria!",
       });
-      setFormData({ name: "", caption: "", imageData: "" });
+      setFormData({ name: "", caption: "", imageUrl: "" });
       setImagePreview("");
       queryClient.invalidateQueries({ queryKey: ["/api/fan-gallery"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/my-photos"] });
@@ -163,7 +163,7 @@ export default function GaleriaFas() {
       setIsProcessingImage(true);
       try {
         const compressedDataUrl = await compressImage(file);
-        setFormData(prev => ({ ...prev, imageData: compressedDataUrl }));
+        setFormData(prev => ({ ...prev, imageUrl: compressedDataUrl }));
         setImagePreview(compressedDataUrl);
         
         toast({
