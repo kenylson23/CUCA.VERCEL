@@ -68,6 +68,7 @@ export interface IStorage {
   
   // Fan Photos operations
   createFanPhoto(photo: InsertFanPhoto): Promise<FanPhoto>;
+  getFanPhoto(id: number): Promise<FanPhoto | undefined>;
   getFanPhotos(): Promise<FanPhoto[]>;
   getPendingFanPhotos(): Promise<FanPhoto[]>;
   getApprovedFanPhotos(): Promise<FanPhoto[]>;
@@ -221,7 +222,7 @@ export class DatabaseStorage implements IStorage {
   async updateContactMessage(id: number, updates: Partial<ContactMessage>): Promise<ContactMessage> {
     const [message] = await db
       .update(contactMessages)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updates)
       .where(eq(contactMessages.id, id))
       .returning();
     return message;
@@ -264,6 +265,15 @@ export class DatabaseStorage implements IStorage {
       .from(fanPhotos)
       .where(eq(fanPhotos.status, "pending"))
       .orderBy(desc(fanPhotos.createdAt));
+  }
+
+  async getFanPhoto(id: number): Promise<FanPhoto | undefined> {
+    const [photo] = await db
+      .select()
+      .from(fanPhotos)
+      .where(eq(fanPhotos.id, id))
+      .limit(1);
+    return photo;
   }
 
   async getApprovedFanPhotos(): Promise<FanPhoto[]> {
