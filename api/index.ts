@@ -2,6 +2,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "../server/routes.js";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Simple logging function for Vercel
 function log(message: string, source = "express") {
@@ -67,7 +71,7 @@ app.use((req, res, next) => {
   });
 
   // Static file serving for production
-  const distPath = path.resolve(process.cwd(), "dist", "public");
+  const distPath = path.resolve(__dirname, "..", "dist", "public");
   
   if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
@@ -80,6 +84,11 @@ app.use((req, res, next) => {
       } else {
         res.status(404).send("Not found");
       }
+    });
+  } else {
+    // For Vercel, static files are handled differently
+    app.use("*", (_req, res) => {
+      res.status(404).json({ message: "Route not found" });
     });
   }
 })();
