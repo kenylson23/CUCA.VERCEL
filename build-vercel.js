@@ -10,13 +10,10 @@ async function buildForVercel() {
   console.log('🔨 Building frontend with Vite...');
   
   try {
-    // Build frontend
+    // Build frontend using existing vite config
     await build({
-      root: resolve(__dirname),
-      build: {
-        outDir: 'dist/public',
-        emptyOutDir: true
-      }
+      configFile: resolve(__dirname, 'vite.config.ts'),
+      mode: 'production'
     });
     
     console.log('✅ Frontend build complete');
