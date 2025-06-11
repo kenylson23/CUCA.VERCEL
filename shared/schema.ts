@@ -112,7 +112,7 @@ export const fanPhotos = pgTable("fan_photos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   name: varchar("name").notNull(),
-  imageUrl: text("image_url").notNull(),
+  imageData: text("image_data").notNull(),
   caption: text("caption"),
   status: varchar("status").notNull().default("pending"),
   approvedBy: varchar("approved_by"),
