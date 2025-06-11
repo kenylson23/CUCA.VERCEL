@@ -246,10 +246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activeCustomers: customers.filter(c => c.isActive).length,
         totalOrders: orders.length,
         pendingOrders: orders.filter(o => o.status === 'pending').length,
-        unreadMessages: messages.filter(m => m.status === 'unread').length,
+        unreadMessages: messages.filter(m => !m.isRead).length,
         totalRevenue: orders
-          .filter(o => o.paymentStatus === 'paid')
-          .reduce((sum, o) => sum + parseFloat(o.total), 0)
+          .filter(o => o.status === 'completed')
+          .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0)
       };
 
       res.json(stats);

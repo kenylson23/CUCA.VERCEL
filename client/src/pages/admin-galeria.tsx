@@ -30,21 +30,23 @@ export default function AdminGaleria() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Buscar todas as fotos
-  const { data: allPhotos = [], isLoading: loadingAll } = useQuery<FanPhoto[]>({
+  const { data: allPhotos = [], isLoading: loadingAll } = useQuery<GalleryPhoto[]>({
     queryKey: ["/api/admin/fan-gallery"],
+    queryFn: () => galleryService.getAllPhotos(),
     enabled: isAuthenticated,
   });
 
   // Buscar fotos pendentes
-  const { data: pendingPhotos = [], isLoading: loadingPending } = useQuery<FanPhoto[]>({
+  const { data: pendingPhotos = [], isLoading: loadingPending } = useQuery<GalleryPhoto[]>({
     queryKey: ["/api/admin/fan-gallery/pending"],
+    queryFn: () => galleryService.getPendingPhotos(),
     enabled: isAuthenticated,
   });
 
   // Mutation para aprovar foto
   const approveMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/fan-gallery/${id}/approve`, "PATCH");
+      return galleryService.approvePhoto(id);
     },
     onSuccess: () => {
       toast({
@@ -78,7 +80,7 @@ export default function AdminGaleria() {
   // Mutation para rejeitar foto
   const rejectMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/fan-gallery/${id}/reject`, "PATCH");
+      return galleryService.rejectPhoto(id);
     },
     onSuccess: () => {
       toast({
@@ -111,7 +113,7 @@ export default function AdminGaleria() {
   // Mutation para deletar foto
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/admin/fan-gallery/${id}`, "DELETE");
+      return galleryService.deletePhoto(id);
     },
     onSuccess: () => {
       toast({
