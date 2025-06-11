@@ -188,11 +188,11 @@ export default function GaleriaFas() {
     console.log("Dados do formulário:", {
       name: formData.name,
       caption: formData.caption,
-      imageDataLength: formData.imageData.length,
-      hasImageData: !!formData.imageData
+      imageUrlLength: formData.imageUrl.length,
+      hasImageUrl: !!formData.imageUrl
     });
     
-    if (!formData.name.trim() || !formData.caption.trim() || !formData.imageData) {
+    if (!formData.name.trim() || !formData.caption.trim() || !formData.imageUrl) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos e selecione uma imagem.",
@@ -342,12 +342,12 @@ export default function GaleriaFas() {
                     {myPhotos.map((photo) => (
                       <div key={photo.id} className="flex items-center gap-3 p-3 border rounded-lg">
                         <img
-                          src={photo.imageData}
-                          alt={photo.caption}
+                          src={photo.imageUrl}
+                          alt={photo.caption || "Fan photo"}
                           className="w-16 h-16 object-cover rounded-lg"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{photo.caption}</p>
+                          <p className="font-medium text-sm truncate">{photo.caption || "Sem legenda"}</p>
                           <p className="text-xs text-gray-500">
                             {new Date(photo.createdAt).toLocaleDateString('pt-BR')}
                           </p>
@@ -410,14 +410,14 @@ export default function GaleriaFas() {
                     {approvedPhotos.map((photo) => (
                       <div key={photo.id} className="group relative">
                         <img
-                          src={photo.imageData}
-                          alt={photo.caption}
+                          src={photo.imageUrl}
+                          alt={photo.caption || "Fan photo"}
                           className="w-full aspect-square object-cover rounded-lg transition-transform group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all rounded-lg flex items-end">
                           <div className="p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity">
                             <p className="font-semibold text-sm">{photo.name}</p>
-                            <p className="text-xs">{photo.caption}</p>
+                            <p className="text-xs">{photo.caption || "Sem legenda"}</p>
                           </div>
                         </div>
                       </div>
