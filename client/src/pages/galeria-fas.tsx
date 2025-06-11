@@ -166,10 +166,10 @@ export default function GaleriaFas() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.caption.trim() || !formData.imageUrl) {
+    if (!formData.name.trim() || !formData.caption.trim() || !currentFile) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos e selecione uma imagem.",
@@ -178,14 +178,40 @@ export default function GaleriaFas() {
       return;
     }
 
-    // Send data with correct field names for backend
-    const photoData = {
-      name: formData.name.trim(),
-      caption: formData.caption.trim(),
-      imageData: formData.imageUrl
-    };
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Erro de configuração",
+        description: "Serviço de upload não está configurado.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    submitPhotoMutation.mutate(photoData);
+    setIsProcessingImage(true);
+    
+    try {
+      // Upload image to Supabase Storage first
+      const { imageUrl, storageKey } = await uploadImageToSupabase(currentFile);
+      
+      // Then send metadata to backend
+      const photoData = {
+        name: formData.name.trim(),
+        caption: formData.caption.trim(),
+        imageUrl,
+        storageKey
+      };
+
+      submitPhotoMutation.mutate(photoData);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Erro no upload",
+        description: "Falha ao enviar imagem. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingImage(false);
+    }
   };
 
   return (
@@ -275,7 +301,7 @@ export default function GaleriaFas() {
                           <>
                             <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                             <p>Clique para escolher uma foto</p>
-                            <p className="text-sm text-gray-500">Máximo 5MB - Upload otimizado</p>
+                            <p className="text-sm text-gray-500">Máximo 5MB - Upload direto e rápido</p>
                           </>
                         )}
                       </div>
@@ -299,9 +325,9 @@ export default function GaleriaFas() {
                 <Button
                   type="submit"
                   className="w-full bg-amber-600 hover:bg-amber-700"
-                  disabled={submitPhotoMutation.isPending}
+                  disabled={submitPhotoMutation.isPending || isProcessingImage}
                 >
-                  {submitPhotoMutation.isPending ? "Enviando..." : "Enviar foto"}
+                  {isProcessingImage ? "Fazendo upload..." : submitPhotoMutation.isPending ? "Finalizando..." : "Enviar foto"}
                 </Button>
               </form>
             </CardContent>

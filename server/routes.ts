@@ -280,26 +280,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Create photo data immediately
-      let photoData = { ...result.data, userId };
-
-      // Try to upload to Supabase Storage if configured and has image data
-      try {
-        const { uploadImageToSupabase, isSupabaseConfigured } = await import('./supabaseStorage.js');
-        
-        if (isSupabaseConfigured() && result.data.imageData) {
-          const { imageUrl, storageKey } = await uploadImageToSupabase(result.data.imageData);
-          photoData = {
-            ...photoData,
-            imageUrl,
-            storageKey
-          };
-        }
-      } catch (storageError) {
-        console.warn('Supabase Storage upload failed, falling back to base64 storage:', storageError);
-        // Continue with base64 storage as fallback
-      }
-
+      // Create photo data with metadata (image already uploaded via frontend)
+      const photoData = { ...result.data, userId };
       const photo = await storage.createFanPhoto(photoData);
       
       res.json({ 
