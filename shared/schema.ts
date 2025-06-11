@@ -115,6 +115,7 @@ export const fanPhotos = pgTable("fan_photos", {
   caption: text("caption"),
   status: varchar("status").notNull().default("pending"),
   approvedBy: varchar("approved_by"),
+  approvedAt: timestamp("approved_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
