@@ -1,117 +1,122 @@
 import {
-  sqliteTable,
+  pgTable,
   text,
+  varchar,
+  timestamp,
+  serial,
+  boolean,
+  decimal,
+  jsonb,
   integer,
-  real,
-} from "drizzle-orm/sqlite-core";
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // Session storage table for authentication
-export const sessions = sqliteTable("sessions", {
-  sid: text("sid").primaryKey(),
-  sess: text("sess").notNull(), // JSON as text in SQLite
-  expire: integer("expire").notNull(), // Unix timestamp
+export const sessions = pgTable("sessions", {
+  sid: varchar("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire").notNull(),
 });
 
 // Admin users table for authentication
-export const adminUsers = sqliteTable("admin_users", {
-  id: text("id").primaryKey().notNull(),
-  email: text("email").unique(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  profileImageUrl: text("profile_image_url"),
-  role: text("role").notNull().default("admin"),
-  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
-  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
+export const adminUsers = pgTable("admin_users", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").notNull().default("admin"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Customer users table
-export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
+  email: varchar("email").notNull().unique(),
   password: text("password").notNull(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  phone: text("phone"),
-  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
-  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  phone: varchar("phone"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Products table
-export const products = sqliteTable("products", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  price: real("price").notNull(),
-  category: text("category"),
-  stockQuantity: real("stock_quantity").notNull().default(0),
+  price: decimal("price").notNull(),
+  category: varchar("category"),
+  stockQuantity: decimal("stock_quantity").notNull().default("0"),
   imageUrl: text("image_url"),
-  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-  slug: text("slug").unique(),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
-  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
+  isActive: boolean("is_active").notNull().default(true),
+  slug: varchar("slug").unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Orders table
-export const orders = sqliteTable("orders", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  status: text("status").notNull().default("pending"),
-  totalAmount: real("total_amount").notNull(),
+  status: varchar("status").notNull().default("pending"),
+  totalAmount: decimal("total_amount").notNull(),
   shippingAddress: text("shipping_address"),
-  paymentMethod: text("payment_method"),
+  paymentMethod: varchar("payment_method"),
   notes: text("notes"),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
-  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Order items table
-export const orderItems = sqliteTable("order_items", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
   orderId: integer("order_id").notNull().references(() => orders.id),
   productId: integer("product_id").notNull().references(() => products.id),
   quantity: integer("quantity").notNull(),
-  price: real("price").notNull(),
+  price: decimal("price").notNull(),
 });
 
 // Contact messages table
-export const contactMessages = sqliteTable("contact_messages", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  subject: text("subject"),
+export const contactMessages = pgTable("contact_messages", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(),
+  email: varchar("email").notNull(),
+  subject: varchar("subject"),
   message: text("message").notNull(),
-  phone: text("phone"),
-  isRead: integer("is_read", { mode: "boolean" }).notNull().default(false),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  phone: varchar("phone"),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Analytics events table
-export const analyticsEvents = sqliteTable("analytics_events", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const analyticsEvents = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
-  eventType: text("event_type").notNull(),
-  eventData: text("event_data"), // JSON as text
+  eventType: varchar("event_type").notNull(),
+  eventData: jsonb("event_data"),
   userAgent: text("user_agent"),
-  ipAddress: text("ip_address"),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  ipAddress: varchar("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Fan photos table
-export const fanPhotos = sqliteTable("fan_photos", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const fanPhotos = pgTable("fan_photos", {
+  id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   imageUrl: text("image_url").notNull(),
   caption: text("caption"),
-  status: text("status").notNull().default("pending"), // pending, approved, rejected
-  approvedBy: text("approved_by"),
-  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
-  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
+  status: varchar("status").notNull().default("pending"),
+  approvedBy: varchar("approved_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Relations
