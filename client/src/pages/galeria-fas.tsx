@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { uploadImageToSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { Camera, Upload, Heart, Star, ArrowLeft, Clock, CheckCircle, XCircle } from "lucide-react";
 import type { FanPhoto, InsertFanPhoto } from "@shared/schema";
 
@@ -17,10 +18,12 @@ export default function GaleriaFas() {
   const [formData, setFormData] = useState({
     name: "",
     caption: "",
-    imageUrl: ""
+    imageUrl: "",
+    storageKey: ""
   });
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isProcessingImage, setIsProcessingImage] = useState<boolean>(false);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -66,8 +69,9 @@ export default function GaleriaFas() {
         title: "Foto enviada com sucesso!",
         description: "Sua foto está aguardando aprovação. Em breve aparecerá na galeria!",
       });
-      setFormData({ name: "", caption: "", imageUrl: "" });
+      setFormData({ name: "", caption: "", imageUrl: "", storageKey: "" });
       setImagePreview("");
+      setCurrentFile(null);
       queryClient.invalidateQueries({ queryKey: ["/api/fan-gallery"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/my-photos"] });
     },
@@ -134,20 +138,20 @@ export default function GaleriaFas() {
         return;
       }
 
-      setIsProcessingImage(true);
+      // Store file for later upload
+      setCurrentFile(file);
       
+      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         const imageDataUrl = e.target?.result as string;
-        setFormData(prev => ({ ...prev, imageUrl: imageDataUrl }));
         setImagePreview(imageDataUrl);
         
         const sizeKB = Math.round(file.size / 1024);
         toast({
-          title: "Imagem preparada",
+          title: "Imagem selecionada",
           description: `Imagem de ${sizeKB}KB pronta para envio.`,
         });
-        setIsProcessingImage(false);
       };
       
       reader.onerror = () => {
@@ -156,7 +160,6 @@ export default function GaleriaFas() {
           description: "Tente novamente com outra imagem.",
           variant: "destructive",
         });
-        setIsProcessingImage(false);
       };
       
       reader.readAsDataURL(file);
