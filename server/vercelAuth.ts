@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { storage } from "./storage.js";
+import { storage } from "./storage";
 
 // JWT-based authentication for Vercel serverless environment
 const JWT_SECRET = process.env.JWT_SECRET || "cuca-jwt-secret-2024";

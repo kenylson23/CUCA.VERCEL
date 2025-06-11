@@ -23,8 +23,8 @@ import {
   type InsertAnalyticsEvent,
   type FanPhoto,
   type InsertFanPhoto,
-} from "../shared/schema.js";
-import { db } from "./db.js";
+} from "../shared/schema";
+import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
