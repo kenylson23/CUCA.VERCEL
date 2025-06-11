@@ -3,21 +3,21 @@ import { Pool } from 'pg';
 import * as schema from "../shared/schema.js";
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set for Supabase connection");
+  throw new Error("DATABASE_URL must be set for PostgreSQL connection");
 }
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  // Remove SSL for local PostgreSQL
 });
 
 export const db = drizzle(pool, { schema });
 
-// Supabase connection is handled automatically
-// No manual table creation needed - Drizzle will handle this
 export async function initializeDatabase() {
   try {
-    console.log('Supabase database connection established');
+    // Test the connection
+    await pool.query('SELECT NOW()');
+    console.log('PostgreSQL database connection established');
     return true;
   } catch (error) {
     console.error('Database connection error:', error);
