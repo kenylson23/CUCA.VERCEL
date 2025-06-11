@@ -72,6 +72,7 @@ export default function GaleriaFas() {
       setFormData({ name: "", caption: "", imageUrl: "", storageKey: "" });
       setImagePreview("");
       setCurrentFile(null);
+      setIsProcessingImage(false);
       queryClient.invalidateQueries({ queryKey: ["/api/fan-gallery"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/my-photos"] });
     },
@@ -178,28 +179,52 @@ export default function GaleriaFas() {
       return;
     }
 
-    if (!isSupabaseConfigured()) {
-      toast({
-        title: "Erro de configuração",
-        description: "Serviço de upload não está configurado.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsProcessingImage(true);
     
     try {
-      // Upload image to Supabase Storage first
-      const { imageUrl, storageKey } = await uploadImageToSupabase(currentFile);
+      let photoData;
       
-      // Then send metadata to backend
-      const photoData = {
-        name: formData.name.trim(),
-        caption: formData.caption.trim(),
-        imageUrl,
-        storageKey
-      };
+      if (isSupabaseConfigured()) {
+        // Try Supabase upload first
+        try {
+          const { imageUrl, storageKey } = await uploadImageToSupabase(currentFile);
+          photoData = {
+            name: formData.name.trim(),
+            caption: formData.caption.trim(),
+            imageUrl,
+            storageKey
+          };
+        } catch (supabaseError) {
+          console.warn('Supabase upload failed, falling back to base64:', supabaseError);
+          // Fall back to base64
+          const reader = new FileReader();
+          const imageData = await new Promise<string>((resolve, reject) => {
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(currentFile);
+          });
+          
+          photoData = {
+            name: formData.name.trim(),
+            caption: formData.caption.trim(),
+            imageData
+          };
+        }
+      } else {
+        // Use base64 fallback
+        const reader = new FileReader();
+        const imageData = await new Promise<string>((resolve, reject) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(currentFile);
+        });
+        
+        photoData = {
+          name: formData.name.trim(),
+          caption: formData.caption.trim(),
+          imageData
+        };
+      }
 
       submitPhotoMutation.mutate(photoData);
     } catch (error) {
@@ -209,7 +234,6 @@ export default function GaleriaFas() {
         description: "Falha ao enviar imagem. Tente novamente.",
         variant: "destructive",
       });
-    } finally {
       setIsProcessingImage(false);
     }
   };
