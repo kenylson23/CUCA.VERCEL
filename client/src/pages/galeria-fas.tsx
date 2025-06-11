@@ -54,7 +54,7 @@ export default function GaleriaFas() {
   // Mutation para enviar nova foto
   const submitPhotoMutation = useMutation({
     mutationFn: async (photoData: InsertFanPhoto) => {
-      return apiRequest("POST", "/api/fan-gallery", photoData);
+      return apiRequest("/api/fan-gallery", "POST", photoData);
     },
     onSuccess: () => {
       toast({
