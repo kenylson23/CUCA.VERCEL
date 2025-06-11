@@ -135,52 +135,36 @@ export default function GaleriaFas() {
       }
 
       setIsProcessingImage(true);
-      try {
-        // Converter para data URL sem compressão
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const imageDataUrl = e.target?.result as string;
-          setFormData(prev => ({ ...prev, imageUrl: imageDataUrl }));
-          setImagePreview(imageDataUrl);
-          
-          const sizeKB = Math.round(file.size / 1024);
-          toast({
-            title: "Imagem carregada",
-            description: `Imagem de ${sizeKB}KB carregada com sucesso.`,
-          });
-          setIsProcessingImage(false);
-        };
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageDataUrl = e.target?.result as string;
+        setFormData(prev => ({ ...prev, imageUrl: imageDataUrl }));
+        setImagePreview(imageDataUrl);
         
-        reader.onerror = () => {
-          toast({
-            title: "Erro ao carregar imagem",
-            description: "Tente novamente com outra imagem.",
-            variant: "destructive",
-          });
-          setIsProcessingImage(false);
-        };
-        
-        reader.readAsDataURL(file);
-      } catch (error) {
+        const sizeKB = Math.round(file.size / 1024);
         toast({
-          title: "Erro ao processar imagem",
+          title: "Imagem preparada",
+          description: `Imagem de ${sizeKB}KB pronta para envio.`,
+        });
+        setIsProcessingImage(false);
+      };
+      
+      reader.onerror = () => {
+        toast({
+          title: "Erro ao carregar imagem",
           description: "Tente novamente com outra imagem.",
           variant: "destructive",
         });
         setIsProcessingImage(false);
-      }
+      };
+      
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log("Dados do formulário:", {
-      name: formData.name,
-      caption: formData.caption,
-      imageUrlLength: formData.imageUrl.length,
-      hasImageUrl: !!formData.imageUrl
-    });
     
     if (!formData.name.trim() || !formData.caption.trim() || !formData.imageUrl) {
       toast({
@@ -191,8 +175,14 @@ export default function GaleriaFas() {
       return;
     }
 
-    console.log("Enviando foto para API...");
-    submitPhotoMutation.mutate(formData);
+    // Send data with correct field names for backend
+    const photoData = {
+      name: formData.name.trim(),
+      caption: formData.caption.trim(),
+      imageData: formData.imageUrl
+    };
+
+    submitPhotoMutation.mutate(photoData);
   };
 
   return (
@@ -282,7 +272,7 @@ export default function GaleriaFas() {
                           <>
                             <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                             <p>Clique para escolher uma foto</p>
-                            <p className="text-sm text-gray-500">Máximo 5MB</p>
+                            <p className="text-sm text-gray-500">Máximo 5MB - Upload otimizado</p>
                           </>
                         )}
                       </div>
