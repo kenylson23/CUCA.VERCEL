@@ -1,137 +1,123 @@
 import {
-  pgTable,
+  sqliteTable,
   text,
-  varchar,
-  timestamp,
-  serial,
-  boolean,
-  decimal,
-  jsonb,
-  index,
   integer,
-} from "drizzle-orm/pg-core";
+  real,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 // Session storage table for authentication
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
+export const sessions = sqliteTable("sessions", {
+  sid: text("sid").primaryKey(),
+  sess: text("sess").notNull(), // JSON as text in SQLite
+  expire: integer("expire").notNull(), // Unix timestamp
+});
 
-// Admin users table for Replit Auth
-export const adminUsers = pgTable("admin_users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role", { length: 50 }).notNull().default("admin"),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+// Admin users table for authentication
+export const adminUsers = sqliteTable("admin_users", {
+  id: text("id").primaryKey().notNull(),
+  email: text("email").unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profileImageUrl: text("profile_image_url"),
+  role: text("role").notNull().default("admin"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
 });
 
 // Customer users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  firstName: varchar("first_name", { length: 100 }),
-  lastName: varchar("last_name", { length: 100 }),
-  phone: varchar("phone", { length: 20 }),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  phone: text("phone"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
 });
 
 // Products table
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+export const products = sqliteTable("products", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
   description: text("description"),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  category: varchar("category", { length: 100 }).notNull(),
-  alcoholContent: decimal("alcohol_content", { precision: 3, scale: 1 }),
-  volume: integer("volume"), // in ml
-  imageUrl: varchar("image_url", { length: 500 }),
-  isActive: boolean("is_active").notNull().default(true),
-  stock: integer("stock").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  price: real("price").notNull(),
+  category: text("category"),
+  stockQuantity: real("stock_quantity").notNull().default(0),
+  imageUrl: text("image_url"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  slug: text("slug").unique(),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
 });
 
 // Orders table
-export const orders = pgTable("orders", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  status: varchar("status", { length: 50 }).notNull().default("pending"),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  shippingAddress: text("shipping_address").notNull(),
-  paymentMethod: varchar("payment_method", { length: 50 }),
-  paymentStatus: varchar("payment_status", { length: 50 }).notNull().default("pending"),
+export const orders = sqliteTable("orders", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("pending"),
+  totalAmount: real("total_amount").notNull(),
+  shippingAddress: text("shipping_address"),
+  paymentMethod: text("payment_method"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
 });
 
 // Order items table
-export const orderItems = pgTable("order_items", {
-  id: serial("id").primaryKey(),
+export const orderItems = sqliteTable("order_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   orderId: integer("order_id").notNull().references(() => orders.id),
   productId: integer("product_id").notNull().references(() => products.id),
   quantity: integer("quantity").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price: real("price").notNull(),
 });
 
 // Contact messages table
-export const contactMessages = pgTable("contact_messages", {
-  id: serial("id").primaryKey(),
+export const contactMessages = sqliteTable("contact_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  subject: text("subject").notNull(),
+  subject: text("subject"),
   message: text("message").notNull(),
-  status: varchar("status", { length: 50 }).notNull().default("unread"),
-  adminResponse: text("admin_response"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  phone: text("phone"),
+  isRead: integer("is_read", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
 });
 
 // Analytics events table
-export const analyticsEvents = pgTable("analytics_events", {
-  id: serial("id").primaryKey(),
-  eventType: varchar("event_type", { length: 100 }).notNull(),
-  eventData: jsonb("event_data"),
+export const analyticsEvents = sqliteTable("analytics_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").references(() => users.id),
-  sessionId: varchar("session_id", { length: 255 }),
-  ipAddress: varchar("ip_address", { length: 45 }),
+  eventType: text("event_type").notNull(),
+  eventData: text("event_data"), // JSON as text
   userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ipAddress: text("ip_address"),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
 });
 
-// Fan Gallery table
-export const fanPhotos = pgTable("fan_photos", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  caption: text("caption").notNull(),
-  imageData: text("image_data").notNull(), // base64 encoded image
+// Fan photos table
+export const fanPhotos = sqliteTable("fan_photos", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").references(() => users.id),
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, approved, rejected
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  approvedAt: timestamp("approved_at"),
-  approvedBy: varchar("approved_by", { length: 255 }),
+  imageUrl: text("image_url").notNull(),
+  caption: text("caption"),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  approvedBy: text("approved_by"),
+  createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+  updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
 });
 
-// Define relations
+// Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
+  fanPhotos: many(fanPhotos),
   analyticsEvents: many(analyticsEvents),
 }));
 
@@ -140,7 +126,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     fields: [orders.userId],
     references: [users.id],
   }),
-  items: many(orderItems),
+  orderItems: many(orderItems),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -165,6 +151,13 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
   }),
 }));
 
+export const fanPhotosRelations = relations(fanPhotos, ({ one }) => ({
+  user: one(users, {
+    fields: [fanPhotos.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -180,6 +173,7 @@ export const insertContactMessageSchema = createInsertSchema(contactMessages).pi
   email: true,
   subject: true,
   message: true,
+  phone: true,
 });
 
 export const insertProductSchema = createInsertSchema(products).pick({
@@ -187,15 +181,14 @@ export const insertProductSchema = createInsertSchema(products).pick({
   description: true,
   price: true,
   category: true,
-  alcoholContent: true,
-  volume: true,
+  stockQuantity: true,
   imageUrl: true,
-  stock: true,
+  slug: true,
 });
 
 export const insertOrderSchema = createInsertSchema(orders).pick({
   userId: true,
-  total: true,
+  totalAmount: true,
   shippingAddress: true,
   paymentMethod: true,
   notes: true,
@@ -209,23 +202,22 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).pick({
 });
 
 export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).pick({
+  userId: true,
   eventType: true,
   eventData: true,
-  userId: true,
-  sessionId: true,
-  ipAddress: true,
   userAgent: true,
+  ipAddress: true,
 });
 
 export const insertFanPhotoSchema = createInsertSchema(fanPhotos).pick({
-  name: true,
+  userId: true,
+  imageUrl: true,
   caption: true,
-  imageData: true,
 });
 
 export const upsertAdminUserSchema = createInsertSchema(adminUsers);
 
-// Type exports
+// Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type UpsertAdminUser = z.infer<typeof upsertAdminUserSchema>;

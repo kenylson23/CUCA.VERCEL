@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import MemoryStore from "memorystore";
 import bcrypt from "bcrypt";
 import { storage } from "./storage.js";
 
@@ -15,25 +15,12 @@ export function getSimpleSession() {
   const isProduction = process.env.NODE_ENV === 'production';
   const isVercel = process.env.VERCEL === '1';
   
-  // For Vercel deployments, use memory store to avoid connection issues
-  let sessionStore;
-  if (process.env.DATABASE_URL && !isVercel) {
-    try {
-      const pgStore = connectPg(session);
-      sessionStore = new pgStore({
-        conString: process.env.DATABASE_URL,
-        createTableIfMissing: false,
-        ttl: sessionTtl,
-        tableName: "sessions",
-      });
-      console.log('Using PostgreSQL session store');
-    } catch (error) {
-      console.warn('Failed to create PostgreSQL session store, using memory store:', error);
-      sessionStore = undefined;
-    }
-  } else {
-    console.log('Using memory session store (Vercel or no DATABASE_URL)');
-  }
+  // Use memory store for SQLite setup
+  const MemStore = MemoryStore(session);
+  const sessionStore = new MemStore({
+    checkPeriod: sessionTtl // prune expired entries every 24h
+  });
+  console.log('Using memory session store for SQLite');
 
   const sessionConfig = {
     secret: process.env.SESSION_SECRET || "cuca-admin-secret-key-2024",
