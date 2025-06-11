@@ -299,7 +299,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const photoData = { ...result.data, userId };
+      let photoData = { ...result.data, userId };
+
+      // Try to upload to Supabase Storage if configured
+      try {
+        const { uploadImageToSupabase, isSupabaseConfigured } = await import('./supabaseStorage');
+        
+        if (isSupabaseConfigured() && imageData) {
+          const { imageUrl, storageKey } = await uploadImageToSupabase(imageData);
+          photoData = {
+            ...photoData,
+            imageUrl,
+            storageKey
+          };
+        }
+      } catch (storageError) {
+        console.warn('Supabase Storage upload failed, falling back to base64 storage:', storageError);
+        // Continue with base64 storage as fallback
+      }
+
       const photo = await storage.createFanPhoto(photoData);
       
       clearTimeout(timeout);
@@ -373,6 +391,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/admin/fan-gallery/:id", authMiddleware, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Get photo details before deletion to check if it has storage key
+      const photo = await storage.getFanPhoto(id);
+      
+      // Delete from Supabase Storage if it exists
+      if (photo?.storageKey) {
+        try {
+          const { deleteImageFromSupabase, isSupabaseConfigured } = await import('./supabaseStorage');
+          
+          if (isSupabaseConfigured()) {
+            await deleteImageFromSupabase(photo.storageKey);
+          }
+        } catch (storageError) {
+          console.warn('Failed to delete image from Supabase Storage:', storageError);
+          // Continue with database deletion even if storage deletion fails
+        }
+      }
+      
       await storage.deleteFanPhoto(id);
       res.json({ success: true, message: "Foto removida com sucesso!" });
     } catch (error) {

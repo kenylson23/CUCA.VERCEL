@@ -112,7 +112,9 @@ export const fanPhotos = pgTable("fan_photos", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   name: varchar("name").notNull(),
-  imageData: text("image_data").notNull(),
+  imageData: text("image_data"), // Manter para compatibilidade com base64
+  imageUrl: varchar("image_url"), // URL da imagem no Supabase Storage
+  storageKey: varchar("storage_key"), // Chave da imagem no Supabase Storage
   caption: text("caption"),
   status: varchar("status").notNull().default("pending"),
   approvedBy: varchar("approved_by"),
@@ -220,6 +222,8 @@ export const insertFanPhotoSchema = createInsertSchema(fanPhotos).pick({
   userId: true,
   name: true,
   imageData: true,
+  imageUrl: true,
+  storageKey: true,
   caption: true,
 });
 

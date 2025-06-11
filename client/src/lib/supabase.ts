@@ -62,24 +62,65 @@ export const supabaseHelpers = {
     return data
   },
 
-  // Fan Photos - submit new photo
+  // Fan Photos - submit new photo with Storage upload
   async submitFanPhoto(photo: {
     name: string;
     image_data: string;
     caption: string;
   }) {
-    const { data, error } = await supabase
-      .from('fan_photos')
-      .insert([{
-        name: photo.name,
-        image_data: photo.image_data,
-        caption: photo.caption,
-        status: 'pending'
-      }])
-      .select()
-    
-    if (error) throw error
-    return data[0]
+    try {
+      // Convert base64 to blob for upload
+      const base64Data = photo.image_data.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const filename = `fan-photos/${timestamp}-${randomId}.jpg`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('fan-gallery')
+        .upload(filename, blob, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('fan-gallery')
+        .getPublicUrl(filename);
+
+      // Insert photo record with storage info
+      const { data, error } = await supabase
+        .from('fan_photos')
+        .insert([{
+          name: photo.name,
+          image_data: photo.image_data, // Manter para compatibilidade
+          image_url: publicUrl,
+          storage_key: filename,
+          caption: photo.caption,
+          status: 'pending'
+        }])
+        .select()
+      
+      if (error) throw error
+      return data[0]
+    } catch (error) {
+      console.error('Error submitting fan photo:', error);
+      throw error;
+    }
   },
 
   // Fan Photos - approve photo
@@ -115,12 +156,38 @@ export const supabaseHelpers = {
 
   // Fan Photos - delete photo
   async deleteFanPhoto(id: number) {
-    const { error } = await supabase
-      .from('fan_photos')
-      .delete()
-      .eq('id', id)
+    try {
+      // First get the photo to retrieve storage key
+      const { data: photo, error: fetchError } = await supabase
+        .from('fan_photos')
+        .select('storage_key')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete from storage if storage key exists
+      if (photo?.storage_key) {
+        const { error: storageError } = await supabase.storage
+          .from('fan-gallery')
+          .remove([photo.storage_key]);
+        
+        if (storageError) {
+          console.warn('Failed to delete image from storage:', storageError);
+        }
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('fan_photos')
+        .delete()
+        .eq('id', id);
     
-    if (error) throw error
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting fan photo:', error);
+      throw error;
+    }
   },
 
   // Contact Messages
