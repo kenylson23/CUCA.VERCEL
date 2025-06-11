@@ -25,6 +25,11 @@ export default function GaleriaFas() {
   const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
+  // Helper function to get image source safely
+  const getImageSrc = (photo: FanPhoto): string => {
+    return photo.imageUrl || photo.imageData || '';
+  };
+
   // Verificação de autenticação
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -361,7 +366,7 @@ export default function GaleriaFas() {
                     {myPhotos.map((photo) => (
                       <div key={photo.id} className="flex items-center gap-3 p-3 border rounded-lg">
                         <img
-                          src={photo.imageUrl || photo.imageData || ''}
+                          src={getImageSrc(photo)}
                           alt={photo.caption || "Fan photo"}
                           className="w-16 h-16 object-cover rounded-lg"
                         />
@@ -429,7 +434,7 @@ export default function GaleriaFas() {
                     {approvedPhotos.map((photo) => (
                       <div key={photo.id} className="group relative">
                         <img
-                          src={photo.imageUrl || photo.imageData}
+                          src={getImageSrc(photo)}
                           alt={photo.caption || "Fan photo"}
                           className="w-full aspect-square object-cover rounded-lg transition-transform group-hover:scale-105"
                         />
