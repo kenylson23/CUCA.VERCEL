@@ -96,7 +96,7 @@ export default function GaleriaFas() {
       } else if (errorMessage.includes("413") || errorMessage.includes("muito grande")) {
         toast({
           title: "Imagem muito grande",
-          description: "Comprima mais a imagem antes de enviar.",
+          description: "Tente com uma imagem menor.",
           variant: "destructive",
         });
       } else {
@@ -109,64 +109,16 @@ export default function GaleriaFas() {
     },
   });
 
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Definir tamanho máximo muito menor para Vercel
-        const MAX_WIDTH = 400;
-        const MAX_HEIGHT = 300;
-        
-        let { width, height } = img;
-        
-        // Redimensionar se necessário
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height = (height * MAX_WIDTH) / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width = (width * MAX_HEIGHT) / height;
-            height = MAX_HEIGHT;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Desenhar e comprimir
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Usar qualidade muito baixa para Vercel (máximo 100KB)
-        let quality = 0.3;
-        let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        
-        // Se ainda muito grande, reduzir qualidade drasticamente
-        while (compressedDataUrl.length > 100000 && quality > 0.1) {
-          quality -= 0.05;
-          compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        }
-        
-        resolve(compressedDataUrl);
-      };
-      
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  };
+
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Verificar tamanho (máximo 2MB para Vercel)
-      if (file.size > 2 * 1024 * 1024) {
+      // Verificar tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "Arquivo muito grande",
-          description: "A imagem deve ter no máximo 2MB para funcionar no Vercel.",
+          description: "A imagem deve ter no máximo 5MB.",
           variant: "destructive",
         });
         return;
@@ -184,23 +136,37 @@ export default function GaleriaFas() {
 
       setIsProcessingImage(true);
       try {
-        const compressedDataUrl = await compressImage(file);
-        setFormData(prev => ({ ...prev, imageUrl: compressedDataUrl }));
-        setImagePreview(compressedDataUrl);
+        // Converter para data URL sem compressão
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const imageDataUrl = e.target?.result as string;
+          setFormData(prev => ({ ...prev, imageUrl: imageDataUrl }));
+          setImagePreview(imageDataUrl);
+          
+          const sizeKB = Math.round(file.size / 1024);
+          toast({
+            title: "Imagem carregada",
+            description: `Imagem de ${sizeKB}KB carregada com sucesso.`,
+          });
+          setIsProcessingImage(false);
+        };
         
-        // Check final compressed size
-        const finalSizeKB = Math.round(compressedDataUrl.length * 0.75 / 1024); // Approximate KB size
-        toast({
-          title: "Imagem carregada",
-          description: `Imagem comprimida para ~${finalSizeKB}KB e pronta para envio.`,
-        });
+        reader.onerror = () => {
+          toast({
+            title: "Erro ao carregar imagem",
+            description: "Tente novamente com outra imagem.",
+            variant: "destructive",
+          });
+          setIsProcessingImage(false);
+        };
+        
+        reader.readAsDataURL(file);
       } catch (error) {
         toast({
           title: "Erro ao processar imagem",
           description: "Tente novamente com outra imagem.",
           variant: "destructive",
         });
-      } finally {
         setIsProcessingImage(false);
       }
     }
@@ -316,7 +282,7 @@ export default function GaleriaFas() {
                           <>
                             <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                             <p>Clique para escolher uma foto</p>
-                            <p className="text-sm text-gray-500">Máximo 2MB (será comprimida para Vercel)</p>
+                            <p className="text-sm text-gray-500">Máximo 5MB</p>
                           </>
                         )}
                       </div>
