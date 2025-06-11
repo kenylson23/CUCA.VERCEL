@@ -219,7 +219,7 @@ export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).pi
 export const insertFanPhotoSchema = createInsertSchema(fanPhotos).pick({
   userId: true,
   name: true,
-  imageUrl: true,
+  imageData: true,
   caption: true,
 });
 

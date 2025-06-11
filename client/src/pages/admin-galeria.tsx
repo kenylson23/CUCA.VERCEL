@@ -5,10 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { galleryService, type GalleryPhoto } from "@/lib/galleryService";
 import { CheckCircle, XCircle, Trash2, Clock, Image, Users, ArrowLeft } from "lucide-react";
-import type { FanPhoto } from "@shared/schema";
 
 export default function AdminGaleria() {
   const { toast } = useToast();

@@ -291,8 +291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate image size in base64 data (should be under 200KB for Vercel)
-      const imageUrl = result.data.imageUrl;
-      if (imageUrl && imageUrl.length > 200000) {
+      const imageData = result.data.imageData;
+      if (imageData && imageData.length > 200000) {
         clearTimeout(timeout);
         return res.status(413).json({ 
           message: "Imagem muito grande - comprima mais a imagem antes de enviar" 
