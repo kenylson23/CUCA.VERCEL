@@ -79,11 +79,28 @@ export default function GaleriaFas() {
         }, 1000);
         return;
       }
-      toast({
-        title: "Erro ao enviar foto",
-        description: error.message || "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      
+      // Handle specific Vercel timeout and size errors
+      const errorMessage = error.message || "";
+      if (errorMessage.includes("Timeout") || errorMessage.includes("408")) {
+        toast({
+          title: "Timeout do Vercel",
+          description: "Imagem muito grande ou conexão lenta. Tente com uma imagem menor.",
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes("413") || errorMessage.includes("muito grande")) {
+        toast({
+          title: "Imagem muito grande",
+          description: "Comprima mais a imagem antes de enviar.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro ao enviar foto",
+          description: errorMessage || "Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -94,9 +111,9 @@ export default function GaleriaFas() {
       const img = new Image();
       
       img.onload = () => {
-        // Definir tamanho máximo
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 600;
+        // Definir tamanho máximo muito menor para Vercel
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 300;
         
         let { width, height } = img;
         
@@ -119,13 +136,13 @@ export default function GaleriaFas() {
         // Desenhar e comprimir
         ctx?.drawImage(img, 0, 0, width, height);
         
-        // Tentar diferentes qualidades até obter tamanho aceitável
-        let quality = 0.8;
+        // Usar qualidade muito baixa para Vercel (máximo 100KB)
+        let quality = 0.3;
         let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
         
-        // Se ainda muito grande, reduzir qualidade
-        while (compressedDataUrl.length > 500000 && quality > 0.1) {
-          quality -= 0.1;
+        // Se ainda muito grande, reduzir qualidade drasticamente
+        while (compressedDataUrl.length > 100000 && quality > 0.1) {
+          quality -= 0.05;
           compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
         }
         
@@ -140,11 +157,11 @@ export default function GaleriaFas() {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Verificar tamanho (máximo 10MB)
-      if (file.size > 10 * 1024 * 1024) {
+      // Verificar tamanho (máximo 2MB para Vercel)
+      if (file.size > 2 * 1024 * 1024) {
         toast({
           title: "Arquivo muito grande",
-          description: "A imagem deve ter no máximo 10MB.",
+          description: "A imagem deve ter no máximo 2MB para funcionar no Vercel.",
           variant: "destructive",
         });
         return;
@@ -166,9 +183,11 @@ export default function GaleriaFas() {
         setFormData(prev => ({ ...prev, imageUrl: compressedDataUrl }));
         setImagePreview(compressedDataUrl);
         
+        // Check final compressed size
+        const finalSizeKB = Math.round(compressedDataUrl.length * 0.75 / 1024); // Approximate KB size
         toast({
           title: "Imagem carregada",
-          description: "Imagem otimizada e pronta para envio.",
+          description: `Imagem comprimida para ~${finalSizeKB}KB e pronta para envio.`,
         });
       } catch (error) {
         toast({
@@ -292,7 +311,7 @@ export default function GaleriaFas() {
                           <>
                             <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                             <p>Clique para escolher uma foto</p>
-                            <p className="text-sm text-gray-500">Máximo 10MB (será otimizada)</p>
+                            <p className="text-sm text-gray-500">Máximo 2MB (será comprimida para Vercel)</p>
                           </>
                         )}
                       </div>

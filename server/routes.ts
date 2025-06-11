@@ -261,14 +261,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Fan Gallery routes
   app.post("/api/fan-gallery", authMiddleware, async (req, res) => {
+    // Set timeout for Vercel
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) {
+        res.status(408).json({ message: "Timeout - tente novamente com uma imagem menor" });
+      }
+    }, 25000); // 25 second timeout for Vercel
+
     try {
       // Check if session is properly initialized
       if (!req.session) {
+        clearTimeout(timeout);
         return res.status(500).json({ message: "Erro de configuração da sessão" });
       }
 
       const result = insertFanPhotoSchema.safeParse(req.body);
       if (!result.success) {
+        clearTimeout(timeout);
         return res.status(400).json({
           message: "Dados inválidos",
           errors: result.error.issues,
@@ -277,15 +286,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = (req.session as any).user?.id;
       if (!userId) {
+        clearTimeout(timeout);
         return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Validate image size in base64 data (should be under 200KB for Vercel)
+      const imageUrl = result.data.imageUrl;
+      if (imageUrl && imageUrl.length > 200000) {
+        clearTimeout(timeout);
+        return res.status(413).json({ 
+          message: "Imagem muito grande - comprima mais a imagem antes de enviar" 
+        });
       }
 
       const photoData = { ...result.data, userId };
       const photo = await storage.createFanPhoto(photoData);
+      
+      clearTimeout(timeout);
       res.json({ success: true, message: "Foto enviada com sucesso! Aguardando aprovação.", photo });
     } catch (error) {
+      clearTimeout(timeout);
       console.error("Error creating fan photo:", error);
-      res.status(500).json({ message: "Erro ao enviar foto" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Erro ao enviar foto" });
+      }
     }
   });
 
