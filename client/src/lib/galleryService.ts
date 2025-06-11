@@ -15,12 +15,23 @@ export interface GalleryPhoto {
 
 // Detect if we should use Supabase (Vercel deployment) or local API (development)
 const useSupabase = () => {
-  return typeof window !== 'undefined' && 
+  const shouldUse = typeof window !== 'undefined' && 
     import.meta.env.VITE_SUPABASE_URL && 
     import.meta.env.VITE_SUPABASE_ANON_KEY &&
     (window.location.hostname.includes('.vercel.app') || 
      window.location.hostname.includes('replit.app') ||
      import.meta.env.PROD);
+  
+  console.log('Gallery Service - Environment Check:', {
+    hasWindow: typeof window !== 'undefined',
+    hasSupabaseUrl: !!import.meta.env.VITE_SUPABASE_URL,
+    hasSupabaseKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'undefined',
+    isProd: import.meta.env.PROD,
+    shouldUseSupabase: shouldUse
+  });
+  
+  return shouldUse;
 };
 
 // Helper function to make API requests with proper error handling
@@ -60,14 +71,17 @@ function convertSupabaseToGalleryPhoto(supabasePhoto: any): GalleryPhoto {
 export const galleryService = {
   // Get approved photos for public gallery
   async getApprovedPhotos(): Promise<GalleryPhoto[]> {
+    console.log('getApprovedPhotos called');
     if (useSupabase()) {
       try {
+        console.log('Using Supabase for getApprovedPhotos');
         const photos = await supabaseHelpers.getFanPhotos();
         return photos.map(convertSupabaseToGalleryPhoto);
       } catch (error) {
         console.warn('Supabase error, falling back to local API:', error);
       }
     }
+    console.log('Using local API for getApprovedPhotos');
     return makeLocalRequest('/api/fan-gallery');
   },
 
