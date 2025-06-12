@@ -8,24 +8,44 @@ const databaseUrl = process.env.DATABASE_URL ||
                    process.env.POSTGRES_URL ||
                    `postgresql://${process.env.PGUSER || 'postgres'}:${process.env.PGPASSWORD || ''}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'postgres'}`;
 
-console.log('Attempting to connect to database...');
+let pool: Pool | null = null;
+let db: ReturnType<typeof drizzle> | null = null;
 
-const pool = new Pool({
-  connectionString: databaseUrl,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
+function createDatabaseConnection() {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: databaseUrl,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    });
+    db = drizzle(pool, { schema });
+  }
+  return { pool, db };
+}
 
-export const db = drizzle(pool, { schema });
+export { db };
+export function getDb() {
+  if (!db) {
+    const conn = createDatabaseConnection();
+    return conn.db!;
+  }
+  return db;
+}
 
 export async function initializeDatabase() {
   try {
+    console.log('Attempting to connect to database...');
+    const { pool: dbPool } = createDatabaseConnection();
+    if (!dbPool) {
+      throw new Error('Failed to create database pool');
+    }
     // Test the connection with a simple query
-    const result = await pool.query('SELECT NOW() as current_time');
+    const result = await dbPool.query('SELECT NOW() as current_time');
     console.log('PostgreSQL database connection established at:', result.rows[0].current_time);
     return true;
   } catch (error) {
     console.error('Database connection error:', error);
     console.error('Connection string format:', databaseUrl.replace(/:[^:@]*@/, ':***@'));
-    throw new Error(`Failed to connect to database: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.log('PostgreSQL unavailable - application will use memory storage fallback');
+    return false;
   }
 }

@@ -71,8 +71,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize SQLite database
-  initializeDatabase();
+  // Initialize database with error handling
+  try {
+    await initializeDatabase();
+  } catch (error) {
+    console.log('Database connection failed, falling back to memory storage');
+  }
   
   const server = await registerRoutes(app);
 
