@@ -1,4 +1,5 @@
-import { supabaseHelpers } from './supabase';
+// Gallery service without Supabase dependency for now
+// import { supabaseHelpers } from './supabase';
 
 export interface GalleryPhoto {
   id: number;
@@ -72,55 +73,23 @@ export const galleryService = {
   // Get approved photos for public gallery
   async getApprovedPhotos(): Promise<GalleryPhoto[]> {
     console.log('getApprovedPhotos called');
-    if (useSupabase()) {
-      try {
-        console.log('Using Supabase for getApprovedPhotos');
-        const photos = await supabaseHelpers.getFanPhotos();
-        return photos.map(convertSupabaseToGalleryPhoto);
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
+    // For now, always use local API
     console.log('Using local API for getApprovedPhotos');
     return makeLocalRequest('/api/fan-gallery');
   },
 
   // Get all photos (admin only)
   async getAllPhotos(): Promise<GalleryPhoto[]> {
-    if (useSupabase()) {
-      try {
-        const photos = await supabaseHelpers.getAllFanPhotos();
-        return photos.map(convertSupabaseToGalleryPhoto);
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
     return makeLocalRequest('/api/admin/fan-gallery');
   },
 
   // Get pending photos (admin only)
   async getPendingPhotos(): Promise<GalleryPhoto[]> {
-    if (useSupabase()) {
-      try {
-        const photos = await supabaseHelpers.getPendingFanPhotos();
-        return photos.map(convertSupabaseToGalleryPhoto);
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
     return makeLocalRequest('/api/admin/fan-gallery/pending');
   },
 
   // Approve photo
   async approvePhoto(id: number): Promise<void> {
-    if (useSupabase()) {
-      try {
-        await supabaseHelpers.approveFanPhoto(id);
-        return;
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
     await makeLocalRequest(`/api/admin/fan-gallery/${id}/approve`, {
       method: 'PATCH',
     });
@@ -128,14 +97,6 @@ export const galleryService = {
 
   // Reject photo
   async rejectPhoto(id: number): Promise<void> {
-    if (useSupabase()) {
-      try {
-        await supabaseHelpers.rejectFanPhoto(id);
-        return;
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
     await makeLocalRequest(`/api/admin/fan-gallery/${id}/reject`, {
       method: 'PATCH',
     });
@@ -143,14 +104,6 @@ export const galleryService = {
 
   // Delete photo
   async deletePhoto(id: number): Promise<void> {
-    if (useSupabase()) {
-      try {
-        await supabaseHelpers.deleteFanPhoto(id);
-        return;
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
     await makeLocalRequest(`/api/admin/fan-gallery/${id}`, {
       method: 'DELETE',
     });
@@ -162,18 +115,6 @@ export const galleryService = {
     imageData: string;
     caption: string;
   }): Promise<void> {
-    if (useSupabase()) {
-      try {
-        await supabaseHelpers.submitFanPhoto({
-          name: photo.name,
-          image_data: photo.imageData,
-          caption: photo.caption
-        });
-        return;
-      } catch (error) {
-        console.warn('Supabase error, falling back to local API:', error);
-      }
-    }
     await makeLocalRequest('/api/fan-gallery', {
       method: 'POST',
       body: JSON.stringify(photo),
