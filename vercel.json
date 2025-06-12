@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "vite build --config vite.config.vercel.ts",
+  "buildCommand": "vite build",
   "outputDirectory": "dist/public",
   "functions": {
     "api/index.ts": {
