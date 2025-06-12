@@ -169,7 +169,7 @@ export default function AdminPanel() {
                 size="icon"
                 className="relative hover:bg-white/20"
               >
-                <Bell className="h-5 w-5" />
+                <MessageSquare className="h-5 w-5" />
                 {stats && stats.unreadMessages > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {stats.unreadMessages}
@@ -211,7 +211,7 @@ export default function AdminPanel() {
                     <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Produtos</p>
                     <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{stats.activeProducts}</p>
                     <p className="text-xs text-blue-500/70 flex items-center mt-1">
-                      <ArrowUpRight className="h-3 w-3 mr-1" />
+                      <Package className="h-3 w-3 mr-1" />
                       {stats.totalProducts} total
                     </p>
                   </div>
@@ -230,7 +230,7 @@ export default function AdminPanel() {
                     <p className="text-sm font-medium text-green-600 dark:text-green-400">Clientes</p>
                     <p className="text-3xl font-bold text-green-700 dark:text-green-300">{stats.activeCustomers}</p>
                     <p className="text-xs text-green-500/70 flex items-center mt-1">
-                      <Heart className="h-3 w-3 mr-1" />
+                      <Users className="h-3 w-3 mr-1" />
                       {stats.totalCustomers} total
                     </p>
                   </div>
@@ -249,7 +249,7 @@ export default function AdminPanel() {
                     <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Pedidos</p>
                     <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{stats.totalOrders}</p>
                     <p className="text-xs text-purple-500/70 flex items-center mt-1">
-                      <Clock className="h-3 w-3 mr-1" />
+                      <ShoppingCart className="h-3 w-3 mr-1" />
                       {stats.pendingOrders} pendentes
                     </p>
                   </div>
@@ -273,12 +273,12 @@ export default function AdminPanel() {
                       }).format(stats.totalRevenue)}
                     </p>
                     <p className="text-xs text-amber-500/70 flex items-center mt-1">
-                      <TrendingUp className="h-3 w-3 mr-1" />
+                      <BarChart3 className="h-3 w-3 mr-1" />
                       +12% este mês
                     </p>
                   </div>
                   <div className="bg-amber-500/20 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                    <DollarSign className="h-8 w-8 text-amber-600" />
+                    <BarChart3 className="h-8 w-8 text-amber-600" />
                   </div>
                 </div>
               </CardContent>
@@ -298,12 +298,12 @@ export default function AdminPanel() {
                   <h3 className="text-lg font-semibold text-indigo-700 dark:text-indigo-300">Galeria dos Fãs</h3>
                   <p className="text-sm text-indigo-600/70 mt-1">Gerencie fotos enviadas pelos fãs</p>
                   <div className="flex items-center mt-3">
-                    <Star className="h-4 w-4 text-indigo-500 mr-1" />
+                    <Eye className="h-4 w-4 text-indigo-500 mr-1" />
                     <span className="text-xs text-indigo-500">Moderar conteúdo</span>
                   </div>
                 </div>
                 <div className="bg-indigo-500/20 p-3 rounded-xl group-hover:scale-110 transition-transform">
-                  <Camera className="h-8 w-8 text-indigo-600" />
+                  <Eye className="h-8 w-8 text-indigo-600" />
                 </div>
               </div>
             </CardContent>
@@ -316,7 +316,7 @@ export default function AdminPanel() {
                   <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">Clientes</h3>
                   <p className="text-sm text-emerald-600/70 mt-1">Visualize e gerencie clientes</p>
                   <div className="flex items-center mt-3">
-                    <Activity className="h-4 w-4 text-emerald-500 mr-1" />
+                    <BarChart3 className="h-4 w-4 text-emerald-500 mr-1" />
                     <span className="text-xs text-emerald-500">{stats?.totalCustomers || 0} registrados</span>
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export default function AdminPanel() {
                   <h3 className="text-lg font-semibold text-rose-700 dark:text-rose-300">Mensagens</h3>
                   <p className="text-sm text-rose-600/70 mt-1">Responder a contatos</p>
                   <div className="flex items-center mt-3">
-                    <Bell className="h-4 w-4 text-rose-500 mr-1" />
+                    <MessageSquare className="h-4 w-4 text-rose-500 mr-1" />
                     <span className="text-xs text-rose-500">{stats?.unreadMessages || 0} não lidas</span>
                   </div>
                 </div>
