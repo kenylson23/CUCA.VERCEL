@@ -1,6 +1,4 @@
-// Gallery service without Supabase dependency for now
-// import { supabaseHelpers } from './supabase';
-
+// Gallery service for fan photo management
 export interface GalleryPhoto {
   id: number;
   name: string;
@@ -13,27 +11,6 @@ export interface GalleryPhoto {
   updatedAt?: string | Date;
   userId?: number;
 }
-
-// Detect if we should use Supabase (Vercel deployment) or local API (development)
-const useSupabase = () => {
-  const shouldUse = typeof window !== 'undefined' && 
-    import.meta.env.VITE_SUPABASE_URL && 
-    import.meta.env.VITE_SUPABASE_ANON_KEY &&
-    (window.location.hostname.includes('.vercel.app') || 
-     window.location.hostname.includes('replit.app') ||
-     import.meta.env.PROD);
-  
-  console.log('Gallery Service - Environment Check:', {
-    hasWindow: typeof window !== 'undefined',
-    hasSupabaseUrl: !!import.meta.env.VITE_SUPABASE_URL,
-    hasSupabaseKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-    hostname: typeof window !== 'undefined' ? window.location.hostname : 'undefined',
-    isProd: import.meta.env.PROD,
-    shouldUseSupabase: shouldUse
-  });
-  
-  return shouldUse;
-};
 
 // Helper function to make API requests with proper error handling
 async function makeLocalRequest(url: string, options?: RequestInit): Promise<any> {
@@ -53,28 +30,9 @@ async function makeLocalRequest(url: string, options?: RequestInit): Promise<any
   return response.json();
 }
 
-// Convert Supabase data format to our GalleryPhoto format
-function convertSupabaseToGalleryPhoto(supabasePhoto: any): GalleryPhoto {
-  return {
-    id: supabasePhoto.id,
-    name: supabasePhoto.name,
-    imageData: supabasePhoto.image_data,
-    caption: supabasePhoto.caption || '',
-    status: supabasePhoto.status,
-    approvedBy: supabasePhoto.approved_by,
-    approvedAt: supabasePhoto.approved_at,
-    createdAt: supabasePhoto.created_at,
-    updatedAt: supabasePhoto.updated_at,
-    userId: supabasePhoto.user_id
-  };
-}
-
 export const galleryService = {
   // Get approved photos for public gallery
   async getApprovedPhotos(): Promise<GalleryPhoto[]> {
-    console.log('getApprovedPhotos called');
-    // For now, always use local API
-    console.log('Using local API for getApprovedPhotos');
     return makeLocalRequest('/api/fan-gallery');
   },
 

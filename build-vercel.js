@@ -10,10 +10,23 @@ async function buildForVercel() {
   console.log('🔨 Building frontend with Vite...');
   
   try {
-    // Build frontend using existing vite config
+    // Build frontend with optimized settings for Vercel
     await build({
       configFile: resolve(__dirname, 'vite.config.ts'),
-      mode: 'production'
+      mode: 'production',
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              vendor: ['react', 'react-dom'],
+              lucide: ['lucide-react'],
+              ui: ['@radix-ui/react-slot', '@radix-ui/react-dialog'],
+            }
+          }
+        },
+        chunkSizeWarningLimit: 1000,
+        minify: 'esbuild'
+      }
     });
     
     console.log('✅ Frontend build complete');

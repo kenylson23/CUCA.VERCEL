@@ -8,30 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+// Import only essential icons to reduce bundle size
 import { 
   BarChart3, 
   Users, 
   Package, 
   ShoppingCart, 
   MessageSquare, 
-  TrendingUp,
   Eye,
   Edit,
   Trash2,
   CheckCircle,
   XCircle,
-  Clock,
-  Camera,
   Settings,
-  LogOut,
-  Bell,
-  Activity,
-  DollarSign,
-  ArrowUpRight,
-  Star,
-  Heart,
-  Home,
-  ExternalLink
+  LogOut
 } from "lucide-react";
 import cucaLogoPath from "@/assets/cuca-logo.png";
 
