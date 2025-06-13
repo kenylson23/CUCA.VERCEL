@@ -40,13 +40,13 @@ export function getSimpleSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    name: 'cuca.session',
+    name: 'connect.sid',
     cookie: {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' as const : 'lax' as const,
+      secure: false, // Sempre false em desenvolvimento
+      sameSite: 'lax' as const,
       maxAge: sessionTtl,
-      domain: isVercel ? undefined : 'localhost',
+      path: '/',
     },
   };
 
@@ -55,7 +55,7 @@ export function getSimpleSession() {
     isVercel,
     secure: sessionConfig.cookie.secure,
     sameSite: sessionConfig.cookie.sameSite,
-    domain: sessionConfig.cookie.domain
+    path: sessionConfig.cookie.path
   });
 
   return session(sessionConfig);
@@ -162,7 +162,7 @@ export const logoutHandler: RequestHandler = (req, res) => {
     if (err) {
       return res.status(500).json({ message: "Erro ao fazer logout" });
     }
-    res.clearCookie('connect.sid');
+    res.clearCookie('connect.sid', { path: '/' });
     res.json({ success: true, message: "Logout realizado com sucesso" });
   });
 };
