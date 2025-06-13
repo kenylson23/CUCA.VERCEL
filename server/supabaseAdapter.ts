@@ -1,23 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import type { IStorage } from './storage';
-import type { 
-  User, 
-  InsertUser, 
-  Product, 
-  InsertProduct, 
-  Order, 
-  InsertOrder, 
-  OrderItem, 
-  InsertOrderItem,
-  ContactMessage,
-  InsertContactMessage,
-  AnalyticsEvent,
-  InsertAnalyticsEvent,
-  FanPhoto,
-  InsertFanPhoto,
-  AdminUser,
-  UpsertAdminUser
-} from '../shared/schema';
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;

@@ -318,8 +318,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Import Supabase adapter
-import { SupabaseStorage, isSupabaseConfigured } from './supabaseAdapter';
-
-// Use Supabase storage if configured, otherwise fallback to database storage
-export const storage = isSupabaseConfigured() ? new SupabaseStorage() : new DatabaseStorage();
+export const storage = new DatabaseStorage();

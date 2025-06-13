@@ -1,24 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Extract Supabase URL and keys from DATABASE_URL if needed
-const DATABASE_URL = import.meta.env.VITE_DATABASE_URL || '';
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || extractSupabaseUrl(DATABASE_URL);
+// Get Supabase configuration from environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-function extractSupabaseUrl(databaseUrl: string): string {
-  if (!databaseUrl) return '';
-  
-  // Extract from postgres://postgres.[project-id]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
-  const match = databaseUrl.match(/postgres\.([^:]+).*@([^:]+\.supabase\.com)/);
-  if (match) {
-    return `https://${match[1]}.supabase.co`;
-  }
-  return '';
-}
-
-// Create Supabase client - use anon key for public operations
-export const supabase = supabaseUrl 
-  ? createClient(supabaseUrl, supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByb2plY3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0NjA1NDQwMCwiZXhwIjoxOTYxNjMwNDAwfQ.placeholder', {
+// Create Supabase client if credentials are available
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: false // We handle auth via Express session
     }
