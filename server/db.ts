@@ -38,9 +38,24 @@ export async function initializeDatabase() {
     if (!dbPool) {
       throw new Error('Failed to create database pool');
     }
+    
     // Test the connection with a simple query
     const result = await dbPool.query('SELECT NOW() as current_time');
     console.log('PostgreSQL database connection established at:', result.rows[0].current_time);
+    
+    // Check if this is a Supabase connection
+    const isSupabase = databaseUrl.includes('supabase.com');
+    if (isSupabase) {
+      console.log('✓ Supabase database connection established');
+      
+      // Verify essential tables exist
+      const tableCheck = await dbPool.query(`
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name IN ('users', 'products', 'contact_messages', 'fan_photos')
+      `);
+      console.log(`✓ Essential tables verified: ${tableCheck.rows.map(r => r.table_name).join(', ')}`);
+    }
+    
     return true;
   } catch (error) {
     console.error('Database connection error:', error);

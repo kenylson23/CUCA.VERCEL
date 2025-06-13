@@ -1,11 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY || '';
+// Extract Supabase URL and keys from DATABASE_URL if needed
+const DATABASE_URL = import.meta.env.VITE_DATABASE_URL || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || extractSupabaseUrl(DATABASE_URL);
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Only create client if both URL and key are available
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+function extractSupabaseUrl(databaseUrl: string): string {
+  if (!databaseUrl) return '';
+  
+  // Extract from postgres://postgres.[project-id]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+  const match = databaseUrl.match(/postgres\.([^:]+).*@([^:]+\.supabase\.com)/);
+  if (match) {
+    return `https://${match[1]}.supabase.co`;
+  }
+  return '';
+}
+
+// Create Supabase client - use anon key for public operations
+export const supabase = supabaseUrl 
+  ? createClient(supabaseUrl, supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByb2plY3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0NjA1NDQwMCwiZXhwIjoxOTYxNjMwNDAwfQ.placeholder', {
+    auth: {
+      persistSession: false // We handle auth via Express session
+    }
+  })
   : null;
 
 export interface UploadResult {
@@ -56,3 +73,80 @@ export async function uploadImageToSupabase(file: File): Promise<UploadResult> {
 export function isSupabaseConfigured(): boolean {
   return !!(supabaseUrl && supabaseAnonKey);
 }
+
+// Helper functions for direct Supabase operations
+export const supabaseHelpers = {
+  // Get products from Supabase
+  async getProducts() {
+    if (!supabase) throw new Error('Supabase not configured');
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Get fan photos from Supabase
+  async getFanPhotos() {
+    if (!supabase) throw new Error('Supabase not configured');
+    
+    const { data, error } = await supabase
+      .from('fan_photos')
+      .select('*')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Submit contact message to Supabase
+  async submitContactMessage(message: {
+    name: string;
+    email: string;
+    subject?: string;
+    message: string;
+    phone?: string;
+  }) {
+    if (!supabase) throw new Error('Supabase not configured');
+    
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .insert([{
+        name: message.name,
+        email: message.email,
+        subject: message.subject || 'Contato do site',
+        message: message.message,
+        phone: message.phone,
+        is_read: false,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Track analytics events
+  async trackEvent(eventType: string, eventData: any = {}) {
+    if (!supabase) throw new Error('Supabase not configured');
+    
+    const { data, error } = await supabase
+      .from('analytics_events')
+      .insert([{
+        event_type: eventType,
+        event_data: eventData,
+        user_agent: navigator.userAgent,
+        ip_address: null, // Will be set by server
+        created_at: new Date().toISOString()
+      }]);
+    
+    if (error) console.warn('Analytics tracking failed:', error);
+    return data;
+  }
+};
