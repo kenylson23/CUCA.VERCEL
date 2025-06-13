@@ -157,6 +157,14 @@ export default function AdminPanel() {
             <div className="flex items-center space-x-3">
               <Button 
                 variant="ghost" 
+                onClick={() => window.location.href = "/supabase"}
+                className="hover:bg-white/20 flex items-center gap-2"
+              >
+                <Database className="h-4 w-4" />
+                <span className="hidden sm:inline">Supabase</span>
+              </Button>
+              <Button 
+                variant="ghost" 
                 onClick={() => window.location.href = "/"}
                 className="hover:bg-white/20 flex items-center gap-2"
               >
