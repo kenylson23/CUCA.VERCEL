@@ -1,4 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
+
+interface SupabaseStats {
+  totalProducts: number;
+  activeProducts: number;
+  totalCustomers: number;
+  activeCustomers: number;
+  totalOrders: number;
+  pendingOrders: number;
+  unreadMessages: number;
+  totalRevenue: number;
+  totalFanPhotos: number;
+  pendingFanPhotos: number;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface FanPhoto {
+  id: number;
+  user_id: number;
+  image_url: string;
+  caption: string;
+  status: string;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+}
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,17 +52,17 @@ import {
 } from "lucide-react";
 
 export default function SupabaseStatus() {
-  const { data: stats, isLoading, refetch } = useQuery({
+  const { data: stats, isLoading, refetch } = useQuery<SupabaseStats>({
     queryKey: ["/api/supabase/stats"],
     retry: false,
   });
 
-  const { data: products } = useQuery({
+  const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/supabase/products"],
     retry: false,
   });
 
-  const { data: fanPhotos } = useQuery({
+  const { data: fanPhotos } = useQuery<FanPhoto[]>({
     queryKey: ["/api/supabase/fan-gallery"],
     retry: false,
   });

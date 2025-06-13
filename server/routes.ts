@@ -45,17 +45,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set the appropriate auth middleware based on environment
   const authMiddleware: RequestHandler = isVercel ? vercelRequireAuth : requireAuth;
 
-  // Supabase-optimized routes for better performance
+  // Supabase-optimized routes using storage layer
   app.get("/api/supabase/products", async (req, res) => {
     try {
-      const { db } = await import("./db.js");
-      const result = await db!.query(`
-        SELECT id, name, description, price, category, image_url, is_active, created_at
-        FROM products 
-        WHERE is_active = true 
-        ORDER BY created_at DESC
-      `);
-      res.json(result.rows);
+      const products = await storage.getProducts();
+      const activeProducts = products.filter(p => p.isActive);
+      res.json(activeProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).json({ message: "Failed to fetch products" });
@@ -64,16 +59,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/supabase/fan-gallery", async (req, res) => {
     try {
-      const { db } = await import("./db.js");
-      const result = await db!.query(`
-        SELECT fp.*, u.username, u.first_name, u.last_name
-        FROM fan_photos fp
-        LEFT JOIN users u ON fp.user_id = u.id
-        WHERE fp.status = 'approved'
-        ORDER BY fp.created_at DESC
-        LIMIT 50
-      `);
-      res.json(result.rows);
+      const photos = await storage.getApprovedFanPhotos();
+      res.json(photos);
     } catch (error) {
       console.error("Error fetching fan photos:", error);
       res.status(500).json({ message: "Failed to fetch fan photos" });
@@ -82,27 +69,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/supabase/stats", authMiddleware, async (req, res) => {
     try {
-      const { db } = await import("./db.js");
-      const queries = await Promise.all([
-        db!.query("SELECT COUNT(*) as total, COUNT(CASE WHEN is_active THEN 1 END) as active FROM products"),
-        db!.query("SELECT COUNT(*) as total, COUNT(CASE WHEN is_active THEN 1 END) as active FROM users"),
-        db!.query("SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending FROM orders"),
-        db!.query("SELECT COUNT(*) as total, COUNT(CASE WHEN is_read = false THEN 1 END) as unread FROM contact_messages"),
-        db!.query("SELECT COALESCE(SUM(total_amount), 0) as revenue FROM orders WHERE status = 'completed'"),
-        db!.query("SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending FROM fan_photos")
+      const [products, customers, orders, messages, fanPhotos] = await Promise.all([
+        storage.getProducts(),
+        storage.getCustomers(),
+        storage.getOrders(),
+        storage.getContactMessages(),
+        storage.getFanPhotos()
       ]);
 
       const stats = {
-        totalProducts: parseInt(queries[0].rows[0].total),
-        activeProducts: parseInt(queries[0].rows[0].active),
-        totalCustomers: parseInt(queries[1].rows[0].total),
-        activeCustomers: parseInt(queries[1].rows[0].active),
-        totalOrders: parseInt(queries[2].rows[0].total),
-        pendingOrders: parseInt(queries[2].rows[0].pending),
-        unreadMessages: parseInt(queries[3].rows[0].unread),
-        totalRevenue: parseFloat(queries[4].rows[0].revenue),
-        totalFanPhotos: parseInt(queries[5].rows[0].total),
-        pendingFanPhotos: parseInt(queries[5].rows[0].pending)
+        totalProducts: products.length,
+        activeProducts: products.filter(p => p.isActive).length,
+        totalCustomers: customers.length,
+        activeCustomers: customers.filter(c => c.isActive).length,
+        totalOrders: orders.length,
+        pendingOrders: orders.filter(o => o.status === 'pending').length,
+        unreadMessages: messages.filter(m => !m.isRead).length,
+        totalRevenue: orders
+          .filter(o => o.status === 'completed')
+          .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0),
+        totalFanPhotos: fanPhotos.length,
+        pendingFanPhotos: fanPhotos.filter(p => p.status === 'pending').length
       };
 
       res.json(stats);

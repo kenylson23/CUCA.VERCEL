@@ -14,6 +14,7 @@ const GaleriaFas = lazy(() => import("@/pages/galeria-fas"));
 const AdminPanel = lazy(() => import("@/pages/admin"));
 const AdminGaleria = lazy(() => import("@/pages/admin-galeria"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
+const SupabaseStatus = lazy(() => import("@/pages/supabase-status"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Landing page for logged out users
@@ -43,6 +44,7 @@ function Router() {
         <Route path="/admin-galeria" component={AdminGaleria} />
         <Route path="/admin/galeria" component={AdminGaleria} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/supabase" component={SupabaseStatus} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
