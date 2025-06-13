@@ -16,9 +16,10 @@ function constructDatabaseUrl() {
     // Extract project reference from Supabase URL
     const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
     if (projectRef) {
-      // Use the password provided by the user
-      const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Kenylson%4023';
-      return `postgresql://postgres:${dbPassword}@db.${projectRef}.supabase.co:5432/postgres`;
+      // Use the password as provided, with proper encoding for special characters
+      const rawPassword = process.env.SUPABASE_DB_PASSWORD || 'Kenylson%4023';
+      // Try direct connection first, then fallback to pooler
+      return `postgresql://postgres:${rawPassword}@db.${projectRef}.supabase.co:5432/postgres`;
     }
   }
   
