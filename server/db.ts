@@ -3,10 +3,32 @@ import { Pool } from 'pg';
 import * as schema from "../shared/schema";
 
 // Get DATABASE_URL from environment variables
-const databaseUrl = process.env.DATABASE_URL || 
-                   process.env.PGDATABASE_URL || 
-                   process.env.POSTGRES_URL ||
-                   `postgresql://${process.env.PGUSER || 'postgres'}:${process.env.PGPASSWORD || ''}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'postgres'}`;
+// Priority: DATABASE_URL > Supabase constructed URL > local PostgreSQL
+function constructDatabaseUrl() {
+  // Use DATABASE_URL if available
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  
+  // If Supabase credentials are available, construct the connection string
+  if (process.env.SUPABASE_URL) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    // Extract project reference from Supabase URL
+    const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+    if (projectRef) {
+      // Use the password provided by the user
+      const dbPassword = process.env.SUPABASE_DB_PASSWORD || 'Kenylson%4023';
+      return `postgresql://postgres:${dbPassword}@db.${projectRef}.supabase.co:5432/postgres`;
+    }
+  }
+  
+  // Fallback to other environment variables
+  return process.env.PGDATABASE_URL || 
+         process.env.POSTGRES_URL ||
+         `postgresql://${process.env.PGUSER || 'postgres'}:${process.env.PGPASSWORD || ''}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'postgres'}`;
+}
+
+const databaseUrl = constructDatabaseUrl();
 
 let pool: Pool | null = null;
 let db: ReturnType<typeof drizzle> | null = null;
