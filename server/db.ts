@@ -3,30 +3,16 @@ import { Pool } from 'pg';
 import * as schema from "../shared/schema";
 
 // Get DATABASE_URL from environment variables
-// Priority: DATABASE_URL > Supabase constructed URL > local PostgreSQL
 function constructDatabaseUrl() {
-  // Use DATABASE_URL if available
-  if (process.env.DATABASE_URL) {
-    return process.env.DATABASE_URL;
+  // Use the provided Supabase connection string
+  const supabaseConnectionString = 'postgresql://postgres.qaskgmrxnxykmougppzk:Kenylson%4023@aws-0-us-east-1.pooler.supabase.com:6543/postgres';
+  
+  // Set as environment variable for drizzle-kit
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = supabaseConnectionString;
   }
   
-  // If Supabase credentials are available, construct the connection string
-  if (process.env.SUPABASE_URL) {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    // Extract project reference from Supabase URL
-    const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
-    if (projectRef) {
-      // Use the password as provided, with proper encoding for special characters
-      const rawPassword = process.env.SUPABASE_DB_PASSWORD || 'Kenylson%4023';
-      // Try direct connection first, then fallback to pooler
-      return `postgresql://postgres:${rawPassword}@db.${projectRef}.supabase.co:5432/postgres`;
-    }
-  }
-  
-  // Fallback to other environment variables
-  return process.env.PGDATABASE_URL || 
-         process.env.POSTGRES_URL ||
-         `postgresql://${process.env.PGUSER || 'postgres'}:${process.env.PGPASSWORD || ''}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'postgres'}`;
+  return process.env.DATABASE_URL;
 }
 
 const databaseUrl = constructDatabaseUrl();
