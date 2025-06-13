@@ -57,6 +57,18 @@ export async function initializeDatabase() {
     if (isSupabase) {
       console.log('✓ Supabase database connection established');
       
+      // Add missing columns to admin_users table
+      try {
+        await dbPool.query(`
+          ALTER TABLE admin_users 
+          ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
+          ADD COLUMN IF NOT EXISTS username VARCHAR UNIQUE
+        `);
+        console.log('✓ Added missing columns to admin_users table');
+      } catch (error) {
+        console.log('Admin users table already has required columns');
+      }
+      
       // Verify essential tables exist
       const tableCheck = await dbPool.query(`
         SELECT table_name FROM information_schema.tables 

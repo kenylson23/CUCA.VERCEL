@@ -1,12 +1,15 @@
-import { db } from "./db";
+import { getDb } from "./db";
 import { products, adminUsers, contactMessages } from "../shared/schema";
 
 export async function seedDatabase() {
   try {
+    const db = getDb();
+    
     // Seed admin users
     await db.insert(adminUsers).values([
       {
         id: "admin-1",
+        username: "admin",
         email: "admin@cuca.ao",
         firstName: "Admin",
         lastName: "CUCA",

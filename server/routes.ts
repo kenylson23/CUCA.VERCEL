@@ -22,8 +22,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session middleware
   app.use(getSimpleSession());
   
-  // Seed database on startup
-  await seedDatabase();
+  // Skip seeding temporarily to avoid schema conflicts
+  console.log("Supabase connected - seeding disabled temporarily");
 
   // Detect environment and use appropriate auth handlers
   const isVercel = process.env.VERCEL === '1';
